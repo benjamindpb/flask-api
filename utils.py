@@ -1,5 +1,6 @@
 import bz2
 import gzip
+from logging import exception
 import time
 import json
 import requests
@@ -13,7 +14,7 @@ def get_new_dump(n=10000, complete_dump=False, filename='0522-latest-truthy.nt',
         the 'coordinate location' property P625 or the 'instance of property' P31.
 
         Args:
-            n (str): number of entitites to obtain/evaluate/read
+            n (str): number of entities to obtain/evaluate/read
             complete_dump (bool): if this value is True the complete dump is read
             filename (str): name of the dump file. 
             format_str (str): the compression format of the dump file to read. 
@@ -33,7 +34,7 @@ def get_new_dump(n=10000, complete_dump=False, filename='0522-latest-truthy.nt',
     else: print("Format error.")         
 
     n_p625, n_p31, total = [0,0,0]
-    with format.open(f'dump/{filename}.{format_str}', 'rt', encoding='utf8') as dump_file, open('dump/new_dump.nt', 'wt') as new_dump:
+    with format.open(f'dump/{filename}.{format_str}', 'rt', encoding='utf8') as dump_file, open('dump/0522_new_dump.nt', 'wt') as new_dump:
         for ntriple in dump_file:
             total += 1
             if n_p625 == n and not complete_dump: break
@@ -53,7 +54,7 @@ def entities_with_coords():
     print('Executing entities_with_coords...')
     start = time.time()
     entity_dict = {}
-    with open('dump/new_dump.nt', 'rt') as new_dump:
+    with open('dump/0522_new_dump.nt', 'rt') as new_dump:
         for ntriple in new_dump:
             split = ntriple.split(' ')
             if '/P625>' in split[1]:
@@ -75,7 +76,7 @@ def instances_of_entities(entities_dict: dict):
     types_with_coords = {}
     types_without_coords = {}
     types_set = set()
-    with open('dump/new_dump.nt', 'rt') as new_dump, open('dump/exceptions.nt', 'wt') as ex:
+    with open('dump/0522_new_dump.nt', 'rt') as new_dump:
         for ntriple in new_dump:
             split = ntriple.split(' ')[:-1] # excludes the '.' element from the list
             if '/P31>' in split[1]:
@@ -94,7 +95,7 @@ def instances_of_entities(entities_dict: dict):
                         else:
                             types_without_coords[type_id] =  1 # base case    
                 except:
-                    print(ntriple)
+                    # ex.write(ntriple)
                     pass
     types_dict = {}
     for _id in types_set:
@@ -111,27 +112,18 @@ def instances_of_entities(entities_dict: dict):
 
     return types_dict, list(types_set), _time
 
-
-def get_json(types_dict: dict, filename: str):
-    types_dict = {
-        "count": len(types_list),
-        "types": types_dict
-    }
-    with open(f'p31/{filename}', 'w') as _json:
-        json.dump(types_dict, _json)
-
-    print(f"Created and saved {filename} in /p31 folder.\n")
             
 def get_tsv(types_dict: dict, types_list: list, filename: str):
     with open(filename, 'w', encoding='utf-8') as f:
         D = get_label_and_desc(types_list) 
-        f.write(f'id\tlabel\twith_coords\twithout_coords\ttotal\n')
+        f.write(f'id\tlabel\twith_coords\twithout_coords\ttotal\tpercentage\n')
         for key in types_dict:
             wc = types_dict[key]['entitiesWithCoords']
             nc = types_dict[key]['entitiesWithoutCoords']
             total = wc+nc
+            percentage = wc/total
             label = D['types'][key]['label']
-            f.write(f'{key}\t{label}\t{wc}\t{nc}\t{total}\n')
+            f.write(f'{key}\t{label}\t{wc}\t{nc}\t{total}\t{percentage}\n')
     print(f'Created and save {filename} file.\n')
 
 USER_AGENT = "wd-atlas/0.1 (benjamin.delpino@ug.uchile.cl; benjamin.dpb@gmail.com) [python-requests/2.28.1 python-flask/2.2.2]"
@@ -148,8 +140,10 @@ def get_label_and_desc(ids: list):
             L.clear()
             fifty_entities = get_entities(ids_join)
             wbgetentities_dict |= fifty_entities
-    ids_join = "|".join(L)
-    wbgetentities_dict |= get_entities(ids_join)
+    if len(L) != 0:
+        ids_join = "|".join(L)
+        wbgetentities_dict |= get_entities(ids_join)
+        
     types_dict = {}
     for key, values in wbgetentities_dict.items():
         d = {
@@ -184,6 +178,7 @@ def get_entities(join: str):
     }, headers={'User-Agent': USER_AGENT})
     return res.json()['entities']
 
+
 def get_qid(search):
   res = requests.get('https://www.wikidata.org/w/api.php', 
     params={
@@ -196,9 +191,9 @@ def get_qid(search):
         
         
 if __name__ == '__main__':
-    get_new_dump(n=100000)
+    #get_new_dump(complete_dump=True)
     entity_dict, _ = entities_with_coords()
     types_dict, types_list, _ = instances_of_entities(entity_dict)
-    get_tsv(types_dict, types_list, "test/content/content.tsv")
+    get_tsv(types_dict, types_list, "test/content/0522_content.tsv")
 
 
