@@ -20,7 +20,8 @@ def content_test():
         get_new_dump(filename=d+'-latest-truthy.nt', complete_dump=True)
         entity_dict, _ = entities_with_coords()
         types_dict, types_list, _ = instances_of_entities(entity_dict)
-        get_tsv(types_dict, f'test/content/{d}-types.tsv')
+        get_tsv(types_dict, types_list, f'test/content/{d}-types.tsv')
+        time.sleep(600)
         
 
 if __name__ == '__main__':
