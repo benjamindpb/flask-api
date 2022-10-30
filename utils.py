@@ -80,7 +80,7 @@ def entities_with_coords():
 def instances_of_entities(entities_dict: dict, get_json=True, get_tsv=False):
     """
         This is the main function to obtain the P31 types of the entities 
-        with coordinate location and the number of entities that are instances of that type with coordinates and with not coordiates.
+        with coordinate location (P625) and the number of entities that are instances of that type with coordinates and with not coordiates.
 
         Args:
             entities_dict (dict): a dict with the ids of the entities with P625 property
