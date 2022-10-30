@@ -1,8 +1,6 @@
-from http.client import responses
 from flask import Flask
 import requests 
 import json
-import time
 from utils import *
 
 app = Flask(__name__)
@@ -14,7 +12,7 @@ WD_QUERY = '''
     SELECT DISTINCT ?item ?label ?desc ?thumb ?image ?lat ?lon WHERE {{
   ?item wdt:P31/wdt:P279* wd:{} .
   ?item rdfs:label ?label .		
-  ?item wdt:P18 ?image .
+  optional {{?item wdt:P18 ?image .}}
   ?item wdt:P625 ?coord .  
   SERVICE wikibase:label {{
     bd:serviceParam wikibase:language "en" .    
@@ -31,11 +29,11 @@ WD_QUERY = '''
   
   FILTER (lang(?label)="en")  
   
-}} limit 2000
+}}
   '''
-
+NO_IMAGE_SRC = 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/195px-No-Image-Placeholder.svg.png'
 @app.route('/data/<search>')
-def data(search):
+def data(search: str):
   qid = get_qid(search)
   Q = WD_QUERY.format(qid)
   req = requests.get(
@@ -45,16 +43,16 @@ def data(search):
       'User-Agent': USER_AGENT
     }
   )
-  json = req.json()
-  results = json["results"]["bindings"]
+  json_ = req.json()
+  results = json_["results"]["bindings"]
   L = []
   for r in results:
     try:
       d = {
           'label': r['label']['value'],
           'entity': r['item']['value'],
-          'image': r['image']['value'], 
-          'thumbnail': r['thumb']['value'],
+          'image': r['image']['value'] if 'image' in r else NO_IMAGE_SRC, 
+          'thumbnail': r['thumb']['value'] if 'thumb' in r else NO_IMAGE_SRC,
           'description': r['desc']['value'],
           'lon': r['lon']['value'],
           'lat': r['lat']['value']
@@ -63,22 +61,30 @@ def data(search):
     except:
       print("Error.", end='\r')
   return {
-    'results': L
+    'results': L,
+    'count': len(L)
   }
 
 
 @app.route('/autocomplete/<search>')
-def get_p31_list(search):
-  with open('p31/types.json', 'r') as f:
-    jf = json.load(f) # {'types': {"Q123":{'label': "123", 'description': "one two three"}}}
-    L = []
+def autocomplete_results(search: str):
+  with open('p31/1022_types.json', 'r') as f:
+    jf = json.load(f) 
+    # jf := {'types': {"Q123":{'label': "123", 'description': "one two three"}, "Q456": {label:..., 'description':...}, ...}, 'count':...}
+    L = {}
     for item in jf["types"].items():
       label = item[1]['label']
-      if label.lower().startswith(search.lower()):
-        L.append(item)
+      percentage = item[1]['percentage']
+      if label!='no label' and label.lower().startswith(search.lower()) and percentage >= 0.01:
+        d = {
+          item[0] : item[1]
+        }
+        L |= d
+    # This dict contains the results for the search, orderer by his "ranking" defined by the percentage of entitites with coordinates of that type of the the total of entities of that type. The order is desc.
+    sorted_dict = sorted(L.items(), key=lambda item: (item[1]['entitiesWithCoords'], item[1]['percentage']), reverse=True)
     return {
       "search": search,
-      "types": L
+      "types": sorted_dict[:7]
     }
 
 
