@@ -1,5 +1,4 @@
-import bz2
-import gzip
+import bz2, gzip
 import time
 import json
 import requests
@@ -26,14 +25,15 @@ def get_new_dump(n=10000, complete_dump=False, filename='0522-latest-truthy.nt',
     print("Executing get_new_dump()...")
     start = time.time()
 
-    if format_str=='gz':
-        format=gzip
-    elif format_str=='bz2':
-        format=bz2
+    format_lib = gzip
+
+    if format_str=='bz2':
+        format_lib=bz2
+        
     else: print("Format error.")         
 
     n_p625, n_p31, total = [0,0,0]
-    with format.open(f'dump/{filename}.{format_str}', 'rt', encoding='utf8') as dump_file, open('dump/new_dump.nt', 'wt') as new_dump:
+    with format_lib.open(f'dump/{filename}.{format_str}', 'rt', encoding='utf8') as dump_file, open('dump/new_dump.nt', 'wt') as new_dump:
         for ntriple in dump_file:
             total += 1
             if n_p625 == n and not complete_dump: break
@@ -97,7 +97,9 @@ def instances_of_entities(entities_dict: dict, get_json=True, get_tsv=False):
     types_set = set()
     with open('dump/1022_new_dump.nt', 'rt') as new_dump:
         for ntriple in new_dump:
-            split = ntriple.split(' ')[:-1] # excludes the '.' element from the list
+            split = ntriple.split(' ')[:-1] # [:-1] excludes the '.' object from the list
+            entity_id = 'Q' + split[0].split('Q')[1][:-1] # entity (Object) id
+            type_id = 'Q' + split[-1].split('Q')[1][:-1] # type (Subject) id
             if '/P31>' in split[1]:
                 try: 
                     entity_id = 'Q' + split[0].split('Q')[1][:-1] # entity (Object) id
@@ -119,26 +121,28 @@ def instances_of_entities(entities_dict: dict, get_json=True, get_tsv=False):
     D = get_label_and_desc(types_set)
     types_dict = {}
     for t_id in types_set:
-        label = D['types'][t_id]['label']
-        if label != 'no label':
-            wc = types_with_coords[t_id] if t_id in types_with_coords else 0
-            nc = types_without_coords[t_id] if t_id in types_without_coords else 0
-            total = wc + nc 
-            percentage = wc / total
-            types_dict[t_id] = {
-                'entitiesWithCoords': wc,
-                'entitiesWithoutCoords': nc,
-                'total': total,
-                'percentage': percentage,
-                'label': label,
-                'description': D['types'][t_id]['description']
-            }
-
+        if t_id in D['types']:
+            label = D['types'][t_id]['label']
+            if label != 'No label defined':
+                wc = types_with_coords[t_id] if t_id in types_with_coords else 0
+                nc = types_without_coords[t_id] if t_id in types_without_coords else 0
+                total = wc + nc 
+                percentage = wc / total
+                if percentage >= 0.01:
+                    types_dict[t_id] = {
+                        'entitiesWithCoords': wc,
+                        'entitiesWithoutCoords': nc,
+                        'total': total,
+                        'percentage': percentage,
+                        'label': label,
+                        'description': D['types'][t_id]['description']
+                    }
     if get_json:
         D = {
             'types': types_dict,
-            'count': len(types_set)
+            'count': len(types_dict)
         }
+        # Save the json file in local storage
         with open('p31/types.json', 'w') as f:
             json.dump(D, f)
 
@@ -156,7 +160,7 @@ def get_tsv(types_dict: dict, filename: str):
             wc = types_dict[key]['entitiesWithCoords']
             nc = types_dict[key]['entitiesWithoutCoords']
             total = wc+nc
-            percentage = wc/total
+            percentage = round(wc/total, 3)
             label = types_dict[key]['label']
             f.write(f'{key}\t{label}\t{wc}\t{nc}\t{total}\t{percentage}\n')
     print(f'Created and save {filename} file.\n')
@@ -179,13 +183,16 @@ def get_label_and_desc(ids: set):
         
     types_dict = {}
     for key, values in wbgetentities_dict.items():
-        d = {
-            key: {
-                'label': values['labels']['en']['value'] if values['labels'] else 'no label',
-                'description': values['descriptions']['en']['value'] if values['descriptions'] else 'no description.'
+        print(key, values)
+        if 'labels' in values:
+            d = {
+                key: {
+                    'label': values['labels']['en']['value'] if values['labels'] else 'No label defined',
+                    'description': values['descriptions']['en']['value'] if values['descriptions'] else 'No description defined'
+                }
             }
-        }
-        types_dict |= d
+            types_dict |= d
+        else: print(f'{key} entity does not exist.')
 
     D = {
         "types": types_dict,
