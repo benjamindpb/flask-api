@@ -43,7 +43,7 @@ def get_new_dump(n=10000, complete_dump=False, filename='0522-latest-truthy.nt',
                 if '/P625>' in split[1]: n_p625 += 1
                 if '/P31>' in split[1]: n_p31 += 1       
     end = time.time()
-    _time = round(end-start, 2)
+    _time = end-start
     print(f"Exec time: {_time} seconds.\ntotal ntriples: {total}\nn_p625: {n_p625}\nn_p31: {n_p31}.")
     print("Created and saved new_dump.nt file in /dump folder.\n")
     return [_time, n_p625, n_p31, total]
@@ -72,7 +72,7 @@ def entities_with_coords():
                     # print(ntriple)
                     pass
     end = time.time()
-    _time = round(end-start, 2)
+    _time = end-start
     print(f"Exec time: {_time} seconds.\n")
     return entity_dict, _time
 
@@ -147,7 +147,7 @@ def instances_of_entities(entities_dict: dict, get_json=True, get_tsv=False):
             json.dump(D, f)
 
     end = time.time()
-    _time = round(end-start, 2)
+    _time = end-start
     print(f"Exec time: {_time} seconds.\n")
 
     return types_dict, _time
@@ -200,7 +200,7 @@ def get_label_and_desc(ids: set):
     }
 
     end = time.time()
-    _time = round(end-start, 2)
+    _time = end-start
     print(f"Exec time: {_time} seconds.\n")
     return D
     
@@ -232,7 +232,8 @@ def get_qid(search):
         
 if __name__ == '__main__':
     # get_new_dump(n=10000)
-    entity_dict, _ = entities_with_coords()
-    instances_of_entities(entity_dict)
+    # entity_dict, _ = entities_with_coords()
+    # instances_of_entities(entity_dict)
+    pass
 
 

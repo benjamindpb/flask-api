@@ -40,7 +40,7 @@ def data(search: str, limit: int):
             'entity': r['item']['value'],
             'image': r['image']['value'] if 'image' in r else 'no-image.png', 
             'thumbnail': r['thumb']['value'] if 'thumb' in r else 'no-image.png',
-            'description': r['desc']['value'] if 'desc' in r else 'No description defined',
+            'description': r['description']['value'] if 'description' in r else 'No description defined',
             'lon': r['lon']['value'],
             'lat': r['lat']['value'],
             'countryCode': r['countryCode']['value'] if 'countryCode' in r else 'xx'
@@ -67,7 +67,7 @@ def autocomplete_results(search: str):
   L = {}
   for item in json_file["types"].items():
     label = item[1]['label']
-    if label!='no label' and label.lower().startswith(search.lower()):
+    if label!='no label' and (label.startswith(search) or search in label):
       d = {
         item[0] : item[1]
       }
@@ -79,7 +79,8 @@ def autocomplete_results(search: str):
   
   return {
     "search": search,
-    "types": sorted_dict[:7]
+    "types": sorted_dict[:7],
+    "count": len(sorted_dict)
   }
 
 if __name__ == "__main__":
