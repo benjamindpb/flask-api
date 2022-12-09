@@ -61,13 +61,23 @@ def data(search: str, limit: int):
     }
 
 
+@app.route('/types')
+def types():
+  return json_file
+
+@app.route('/type/<search>')
+def search_type(search: str):
+  D = dict(filter(lambda val: val[1]['label']  == search, json_file["types"].items()))
+  res = {key: val for key, val in sorted(D.items(), key = lambda ele: ele[1]['entitiesWithCoords'], reverse = True)}
+  return D
+
 @app.route('/autocomplete/<search>')
 def autocomplete_results(search: str): 
   # jf := {'types': {"Q123":{'label': "123", 'description': "one two three"}, "Q456": {label:..., 'description':...}, ...}, 'count':...}
   L = {}
   for item in json_file["types"].items():
     label = item[1]['label']
-    if label!='no label' and (label.startswith(search) or search in label):
+    if label.startswith(search) or search in label.split(' '):
       d = {
         item[0] : item[1]
       }
@@ -86,4 +96,4 @@ def autocomplete_results(search: str):
 if __name__ == "__main__":
   with open('p31/types.json', 'r') as f:
     json_file = json.load(f)
-    app.run(debug=True)
+    app.run(host="localhost", port=5000, debug=True)
