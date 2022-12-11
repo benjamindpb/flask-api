@@ -31,7 +31,6 @@ def data(search: str, limit: int):
     )
     print(f'{search}/{response.status_code}')
     json_response = response.json()
-    # return json_response
     results = json_response["results"]["bindings"]
     for r in results:
       if 'lon' in r and 'lat' in r:
@@ -53,7 +52,6 @@ def data(search: str, limit: int):
     }
   except:
     print(f'WDQS ERROR.')
-    time.sleep(60)
     return {
       'search': search,
       'count': -1,
@@ -65,11 +63,11 @@ def data(search: str, limit: int):
 def types():
   return json_file
 
-@app.route('/type/<search>')
-def search_type(search: str):
-  D = dict(filter(lambda val: val[1]['label']  == search, json_file["types"].items()))
-  res = {key: val for key, val in sorted(D.items(), key = lambda ele: ele[1]['entitiesWithCoords'], reverse = True)}
-  return D
+@app.route('/type/<id>')
+def type_id(id: str):
+  entity_info = json_file["types"][id]
+  return entity_info
+
 
 @app.route('/autocomplete/<search>')
 def autocomplete_results(search: str): 
