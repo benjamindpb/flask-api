@@ -11,6 +11,8 @@ WD_QUERY = '''
     FILTER (LANG(?label)="en")
     # Get coordinate location
     ?item wdt:P625 ?coord .
+    ?item p:P625 [ psv:P625[ wikibase:geoGlobe ?globe ; ] ] .
+    FILTER ( ?globe = wd:Q2 )
     # Get item description
     OPTIONAL {{?item schema:description ?description .
             FILTER (LANG(?description)="en")}}

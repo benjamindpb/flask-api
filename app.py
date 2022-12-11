@@ -31,7 +31,6 @@ def data(search: str, limit: int):
     )
     print(f'{search}/{response.status_code}')
     json_response = response.json()
-    # return json_response
     results = json_response["results"]["bindings"]
     for r in results:
       if 'lon' in r and 'lat' in r:
@@ -53,12 +52,21 @@ def data(search: str, limit: int):
     }
   except:
     print(f'WDQS ERROR.')
-    time.sleep(60)
     return {
       'search': search,
       'count': -1,
       'status': 500
     }
+
+
+@app.route('/types')
+def types():
+  return json_file
+
+@app.route('/type/<id>')
+def type_id(id: str):
+  entity_info = json_file["types"][id]
+  return entity_info
 
 
 @app.route('/autocomplete/<search>')
@@ -67,7 +75,7 @@ def autocomplete_results(search: str):
   L = {}
   for item in json_file["types"].items():
     label = item[1]['label']
-    if label!='no label' and (label.startswith(search) or search in label):
+    if label.startswith(search) or search in label.split(' '):
       d = {
         item[0] : item[1]
       }
@@ -86,4 +94,4 @@ def autocomplete_results(search: str):
 if __name__ == "__main__":
   with open('p31/types.json', 'r') as f:
     json_file = json.load(f)
-    app.run(debug=True)
+    app.run(host="localhost", port=5000, debug=True)
