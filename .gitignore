@@ -1,9 +1,10 @@
 dump/
 img/
-p31/
 test/
 venv/
 
 __pycache__
 
 *.tsv
+*.pid
+*.log
