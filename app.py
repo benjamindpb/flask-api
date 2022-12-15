@@ -5,6 +5,7 @@ from settings import *
 app = Flask(__name__)
 
 json_file = {}
+JSON_OPENED = False
 
 @app.route('/data/<search>/<int:limit>')
 def data(search: str, limit: int):
@@ -71,29 +72,30 @@ def type_id(id: str):
 
 @app.route('/autocomplete/<search>')
 def autocomplete_results(search: str): 
-  # jf := {'types': {"Q123":{'label': "123", 'description': "one two three"}, "Q456": {label:..., 'description':...}, ...}, 'count':...}
-  with open('p31/types.json', 'r') as f:
+  global JSON_OPENED, json_file
+  if not JSON_OPENED:
+    f = open('p31/types.json', 'r') 
     json_file = json.load(f)
-    L = {}
-    for item in json_file["types"].items():
-      label = item[1]['label']
-      if label.startswith(search) or search in label.split(' '):
-        d = {
-          item[0] : item[1]
-        }
-        L |= d
-    sorted_dict = sorted(L.items(),
-      key=lambda item: (item[1]['entitiesWithCoords'], item[1]['percentage']), 
-      reverse=True
-    )
-    
-    return {
-      "search": search,
-      "types": sorted_dict[:7],
-      "count": len(sorted_dict)
-    }
+    JSON_OPENED = True
+
+  L = {}
+  for item in json_file["types"].items():
+    label = item[1]['label']
+    if label.startswith(search) or search in label.split(' '):
+      d = {
+        item[0] : item[1]
+      }
+      L |= d
+  sorted_dict = sorted(L.items(),
+    key=lambda item: (item[1]['entitiesWithCoords'], item[1]['percentage']), 
+    reverse=True
+  )
+  
+  return {
+    "search": search,
+    "types": sorted_dict[:7],
+    "count": len(sorted_dict)
+  }
 
 if __name__ == "__main__":
-  # with open('p31/types.json', 'r') as f:
-  #   json_file = json.load(f)
   app.run(host="localhost", port=5000, debug=True)

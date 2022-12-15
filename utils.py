@@ -2,6 +2,7 @@ import bz2, gzip
 import time
 import json
 import requests
+from settings import *
 
 USER_AGENT = "wd-atlas/0.1 (benjamin.delpino@ug.uchile.cl; benjamin.dpb@gmail.com) [python-requests/2.28.1 python-flask/2.2.2]"
 
@@ -28,9 +29,7 @@ def get_new_dump(n=10000, complete_dump=False, filename='0522-latest-truthy.nt',
     format_lib = gzip
 
     if format_str=='bz2':
-        format_lib=bz2
-        
-    else: print("Format error.")         
+        format_lib=bz2      
 
     n_p625, n_p31, total = [0,0,0]
     with format_lib.open(f'dump/{filename}.{format_str}', 'rt', encoding='utf8') as dump_file, open('dump/new_dump.nt', 'wt') as new_dump:
@@ -95,11 +94,9 @@ def instances_of_entities(entities_dict: dict, get_json=True, get_tsv=False):
     types_with_coords = {}
     types_without_coords = {}
     types_set = set()
-    with open('dump/1022_new_dump.nt', 'rt') as new_dump:
+    with open('dump/new_dump.nt', 'rt') as new_dump:
         for ntriple in new_dump:
             split = ntriple.split(' ')[:-1] # [:-1] excludes the '.' object from the list
-            entity_id = 'Q' + split[0].split('Q')[1][:-1] # entity (Object) id
-            type_id = 'Q' + split[-1].split('Q')[1][:-1] # type (Subject) id
             if '/P31>' in split[1]:
                 try: 
                     entity_id = 'Q' + split[0].split('Q')[1][:-1] # entity (Object) id
@@ -183,7 +180,6 @@ def get_label_and_desc(ids: set):
         
     types_dict = {}
     for key, values in wbgetentities_dict.items():
-        print(key, values)
         if 'labels' in values:
             d = {
                 key: {
@@ -209,7 +205,7 @@ def getjson(types_dict: dict):
         json.dump(types_dict, f)
 
 def get_entities(join: str):
-    res = requests.get('https://www.wikidata.org/w/api.php', params={
+    res = requests.get(WD_API_ENNPOINT, params={
         'action': 'wbgetentities',
         'ids': join, 
         'languages': 'en',
@@ -220,7 +216,7 @@ def get_entities(join: str):
 
 
 def get_qid(search):
-  res = requests.get('https://www.wikidata.org/w/api.php', 
+  res = requests.get(WD_API_ENNPOINT, 
     params={
       'action': 'wbsearchentities',
       'search': search, 
@@ -231,9 +227,7 @@ def get_qid(search):
         
         
 if __name__ == '__main__':
-    # get_new_dump(n=10000)
+    # get_new_dump(complete_dump=True)
     # entity_dict, _ = entities_with_coords()
     # instances_of_entities(entity_dict)
     pass
-
-
