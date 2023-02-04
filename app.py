@@ -18,7 +18,6 @@ def data(search: str, limit: int):
       'error_type': 'qid not found',
       'count': -2
     }
-  limit = 10**6 if limit == 0 else 10**limit
   Q = WD_QUERY.format(qid, limit)
   L = []
   try:
@@ -81,7 +80,9 @@ def autocomplete_results(search: str):
   L = {}
   for item in json_file["types"].items():
     label = item[1]['label']
-    if label.startswith(search) or search in label.split(' '):
+    # words = label.split(' ')
+    # words = [l.lower() for l in]
+    if label.lower().startswith(search) or search in label.split(' '):
       d = {
         item[0] : item[1]
       }
