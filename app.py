@@ -1,8 +1,10 @@
 from flask import Flask
 from utils import *
 from settings import *
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 json_file = {}
 JSON_OPENED = False
