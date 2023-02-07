@@ -4,13 +4,29 @@ from settings import *
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app) # activate CORS policy
 
 json_file = {}
 JSON_OPENED = False
 
 @app.route('/data/<search>/<int:limit>')
 def data(search: str, limit: int):
+  """
+    This function runs the SPARQL query to get all georeferenced instances of a type given by its label. 
+    This query is found in the project's *setting.py* file and receives as arguments the label 
+    to search for and the number of results to return.
+
+    Args:
+		search (str): label of the entity to search
+		limit (int): integer to define the number of results to obtain 
+
+	Returns:
+		dict: if in the retrieved dictionary *count* is < 0 an error occurred. Specifically, 
+    if it is equal to -2, the ID to search for is incorrect, that is, the label entered is not in Wikidata.
+    On the other hand, if *count* is equal to -1, it is an error propagated by an internal 
+    Wikidata Query Service error (timeout error).
+
+  """
   try:
     qid = get_qid(search)
   except:
@@ -63,16 +79,39 @@ def data(search: str, limit: int):
 
 @app.route('/types')
 def types():
+  """
+    Returns: 
+      dict: with all the georeferenceable types of the database with their info.
+  """
   return json_file
 
 @app.route('/type/<id>')
 def type_id(id: str):
+  """
+    Arg:
+      id (str): identifier of a Wikidata entity.
+
+    Returns:
+      dict: with type information such as its label, description, number of instances, etc.
+  """
   entity_info = json_file["types"][id]
   return entity_info
 
 
 @app.route('/autocomplete/<search>')
-def autocomplete_results(search: str): 
+def autocomplete_results(search: str):
+  """
+    This function performs a search for all georeferenced instances of a type.
+    This function is very important for the autocompletion of the system. It is based on the percentage 
+    of georeferenceable instances of the searched type to return first (in order) the types 
+    that have more georeferenceable instances in relation to the total results.
+
+    Arg:
+      search (str): label to search
+
+    Returns:
+      dict: with all georeferenced instances of the searched type.
+  """
   global JSON_OPENED, json_file
   if not JSON_OPENED:
     f = open('p31/types.json', 'r') 

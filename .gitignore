@@ -1,7 +1,10 @@
 dump/
 img/
-test/
 venv/
+test/content
+test/img
+test/labels
+test/performance
 
 __pycache__
 

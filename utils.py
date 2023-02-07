@@ -4,8 +4,6 @@ import json
 import requests
 from settings import *
 
-USER_AGENT = "wd-atlas/0.1 (benjamin.delpino@ug.uchile.cl; benjamin.dpb@gmail.com) [python-requests/2.28.1 python-flask/2.2.2]"
-
 def get_new_dump(n=10000, complete_dump=False, filename='0522-latest-truthy.nt', format_str='gz'):
     """
         This function creates a new dump file in nt format.
