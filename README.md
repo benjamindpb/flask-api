@@ -1,4 +1,4 @@
-# Flask API for Wikidata Atlas project
+# Flask API for [Wikidata Atlas](https://wdatlas.dcc.uchile.cl/) project
 
 ## Requirements
 
