@@ -96,7 +96,7 @@ def autocomplete_results(search: str):
   
   return {
     "search": search,
-    "types": sorted_dict[:7],
+    "types": sorted_dict[:],
     "count": len(sorted_dict)
   }
 
