@@ -4,8 +4,6 @@ import json
 import requests
 from settings import *
 
-USER_AGENT = "wd-atlas/0.1 (benjamin.delpino@ug.uchile.cl; benjamin.dpb@gmail.com) [python-requests/2.28.1 python-flask/2.2.2]"
-
 def get_new_dump(n=10000, complete_dump=False, filename='0522-latest-truthy.nt', format_str='gz'):
     """
         This function creates a new dump file in nt format.
@@ -148,21 +146,57 @@ def instances_of_entities(entities_dict: dict, get_json=True, get_tsv=False):
     print(f"Exec time: {_time} seconds.\n")
 
     return types_dict, _time
-    
-            
-def get_tsv(types_dict: dict, filename: str):
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.write(f'id\tlabel\twith_coords\twithout_coords\ttotal\tpercentage\n')
-        for key in types_dict:
-            wc = types_dict[key]['entitiesWithCoords']
-            nc = types_dict[key]['entitiesWithoutCoords']
-            total = wc+nc
-            percentage = round(wc/total, 3)
-            label = types_dict[key]['label']
-            f.write(f'{key}\t{label}\t{wc}\t{nc}\t{total}\t{percentage}\n')
-    print(f'Created and save {filename} file.\n')
+
+def get_entities(join: str):
+    """
+        This function make a GET request to Wikidata API to obtain
+        the labels and description of entities.
+
+        Args:
+            join (str): a string with the QID's separate by "|".
+            for example: Q1|Q2|Q3|...
+        Returns:
+            dict: Wikidata API response
+    """
+    res = requests.get(WD_API_ENNPOINT, params={
+        'action': 'wbgetentities',
+        'ids': join, 
+        'languages': 'en',
+        'props': 'labels|descriptions',
+        'format': 'json'
+    }, headers={'User-Agent': USER_AGENT})
+    return res.json()['entities']
+
+
+def get_qid(search):
+    """
+        This function returns the ID of a Wikidata entity label.
+
+        Args:
+            search (str): entity label to search 
+        Returns:
+            str: ID of the entity
+    """
+    res = requests.get(WD_API_ENNPOINT, 
+    params={
+        'action': 'wbsearchentities',
+        'search': search, 
+        'language': ['en'],
+        'format': 'json'
+        })
+    return res.json()['search'][0]['id']
 
 def get_label_and_desc(ids: set):
+    """
+        Returns the complete dict (object) with all georeferenced Wikidata instances.
+
+        Args: 
+            ids (set): set with the Wikidata georreferenced QID's
+        
+        Returns:
+            dict: with all the georreferenced entities
+
+    """
     print("Executing get_label_and_desc()...")
     start = time.time()
     L = []
@@ -199,31 +233,25 @@ def get_label_and_desc(ids: set):
     _time = end-start
     print(f"Exec time: {_time} seconds.\n")
     return D
-    
+
+def get_tsv(types_dict: dict, filename: str):
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(f'id\tlabel\twith_coords\twithout_coords\ttotal\tpercentage\n')
+        for key in types_dict:
+            wc = types_dict[key]['entitiesWithCoords']
+            nc = types_dict[key]['entitiesWithoutCoords']
+            total = wc+nc
+            percentage = round(wc/total, 3)
+            label = types_dict[key]['label']
+            f.write(f'{key}\t{label}\t{wc}\t{nc}\t{total}\t{percentage}\n')
+    print(f'Created and save {filename} file.\n')
+
+
 def getjson(types_dict: dict):
     with open('p31/types.json', 'w') as f:
         json.dump(types_dict, f)
 
-def get_entities(join: str):
-    res = requests.get(WD_API_ENNPOINT, params={
-        'action': 'wbgetentities',
-        'ids': join, 
-        'languages': 'en',
-        'props': 'labels|descriptions',
-        'format': 'json'
-    }, headers={'User-Agent': USER_AGENT})
-    return res.json()['entities']
 
-
-def get_qid(search):
-  res = requests.get(WD_API_ENNPOINT, 
-    params={
-      'action': 'wbsearchentities',
-      'search': search, 
-      'language': ['en'],
-      'format': 'json'
-      })
-  return res.json()['search'][0]['id']
         
         
 if __name__ == '__main__':
