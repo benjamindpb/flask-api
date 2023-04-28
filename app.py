@@ -50,19 +50,23 @@ def data(search: str, limit: int):
     print(f'{search}/{response.status_code}')
     json_response = response.json()
     results = json_response["results"]["bindings"]
+    ids = []
     for r in results:
       if 'lon' in r and 'lat' in r:
-        d = {
-            'label': r['label']['value'],
-            'entity': r['item']['value'],
-            'image': r['image']['value'] if 'image' in r else 'no-image.png', 
-            'thumbnail': r['thumb']['value'] if 'thumb' in r else 'no-image.png',
-            'description': r['description']['value'] if 'description' in r else 'No description defined',
-            'lon': r['lon']['value'],
-            'lat': r['lat']['value'],
-            'countryCode': r['countryCode']['value'] if 'countryCode' in r else 'xx'
-          }
-        L.append(d)
+        entity = r['item']['value']
+        if entity not in ids:
+          d = {
+              'label': r['label']['value'],
+              'entity': r['item']['value'],
+              'image': r['image']['value'] if 'image' in r else 'no-image.png', 
+              'thumbnail': r['thumb']['value'] if 'thumb' in r else 'no-image.png',
+              'description': r['description']['value'] if 'description' in r else 'No description defined',
+              'lon': r['lon']['value'],
+              'lat': r['lat']['value'],
+              'countryCode': r['countryCode']['value'] if 'countryCode' in r else 'xx'
+            }
+          L.append(d)
+          ids.append(entity)
         
     return {
       'results': L,
@@ -135,7 +139,7 @@ def autocomplete_results(search: str):
   
   return {
     "search": search,
-    "types": sorted_dict[:7],
+    "types": sorted_dict[:],
     "count": len(sorted_dict)
   }
 
