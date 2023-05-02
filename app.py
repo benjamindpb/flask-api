@@ -125,9 +125,8 @@ def autocomplete_results(search: str):
   L = {}
   for item in json_file["types"].items():
     label = item[1]['label']
-    # words = label.split(' ')
-    # words = [l.lower() for l in]
-    if label.lower().startswith(search) or search in label.split(' '):
+    # if label.lower().startswith(search) or search in label.split(' '):
+    if search.lower() in label.lower():
       d = {
         item[0] : item[1]
       }

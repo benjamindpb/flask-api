@@ -1,7 +1,6 @@
 dump/
 img/
 venv/
-p31/
 test/content
 test/img
 test/labels
